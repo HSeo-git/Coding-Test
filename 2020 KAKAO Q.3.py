@@ -1,62 +1,50 @@
 #2020 KAKAO BLIND RECRUITMENT Q.3
 
-from collections import deque
-
-key = [[0, 0, 0], [1, 0, 0], [0, 1, 1]]
-lock = [[1, 1, 1], [1, 1, 0], [1, 0, 1]]
-
 #자물쇠에 N-1만큼 padding 주기(열쇠가 이동하는 board생성)
-M = len(lock)
-N = len(key)
-board = [[0]*(M+N-1) for _ in range(M+N-1)]
-for i in range(M):
-    for j in range(M):
-        board[i+N-1][j+N-1] = lock[i][j]
+def make_board(padding, M, lock):
+    board = [[0]*(M+2*padding) for _ in range(M+2*padding)]
+    for i in range(M):
+        for j in range(M):
+            board[i+padding][j+padding] = lock[i][j]
+    return board
 
-#열쇠이동
-def bfs(board, key, N, M):
-    dy = [1, -1, 0, 0]
-    dx = [0, 0, 1, -1]
-    q = deque()
-    q.append([0,0])
-    while q:
-        y, x = q.popleft()
-        if is_openable(board, y, x, N, M, key):
-            return True
-        else:
-            new_key = rotated_key(key, N)
-            if is_openable(board, y, x, N, M, new_key):
-                return True
-        for k in range(4):
-            next_y = y+dy[k]
-            next_x = x+dx[k]
-            if next_y >= (M+N-1) or next_x >= (M+N-1) or next_y < 0 or next_x < 0:
-                continue
-            q.append([next_y, next_x])
+#열쇠 돌리기
+def rotate_key(key, idx):
+    if idx == 0:
+        return key
+    else:
+        new_key = [[0]*(len(key)) for _ in range(len(key))]
+        for i in range(len(key)):
+            for j in range(len(key)):
+                new_key[j][len(key)-1-i] = key[i][j]
+        return new_key
+
+#키 넣기
+def put_key(r, c, key, board, lock):
+    for i in range(len(key)):
+        for j in range(len(key)):
+            board[r+i][c+j] += key[i][j]
+    return board
+
+#열리는지 확인하기
+def is_opened(board, lock, padding):
+    for a in range(len(lock)):
+        for b in range(len(lock)):
+            if board[padding+a][padding+b] != 1:
+                return False
+    return True
+
+def solution(key, lock):
+    M = len(lock)
+    N = len(key)
+    padding = N - 1
+
+    for r in range(M+padding):
+        for c in range(M+padding):
+            for i in range(4):
+                board = make_board(padding, M, lock)
+                key = rotate_key(key, i)
+                new_board = put_key(r, c, key, board, lock)
+                if is_opened(new_board, lock, padding):
+                    return True
     return False
-
-#열쇠회전
-def rotated_key(key, N):
-    new_key = [[0]*N for _ in range(N)]
-    for i in range(N):
-        for j in range(N):
-            new_key[j][N-i-1] = key[i][j]
-    return new_key
-
-#자물쇠 열리는지 확인
-def is_openable(board, y, x, N, M, key):
-    for i in range(N):
-        for j in range(N):
-            board[i + y][j + x] += key[i][j]
-    for a in range(1, M):
-        for b in range(1, M):
-            board[a + N -1][b + N -1] += board[a + N -1-1][b + N -1-1]
-    for c in range(1, M):
-        board[c][M-1] += board[c-1][M-1]
-    if board[M-1][M-1] == M*M:
-        return True
-    return False
-
-if bfs(board, key, N, M):
-    print(True)
-else: print(False)
