@@ -1,5 +1,7 @@
 #2020 KAKAO Q5
 
+#(solution 1) 문제 지시사항 그대로 시뮬레이션 구현
+
 def is_possible_floor(x, y, board_floor, board_pillar, n):
     if x < 0 or x >= n or y <= 0 or y > n: #영역 벗어나면 안됨
         return False
@@ -81,5 +83,42 @@ def solution(n, build_frame):
                 answer.append([x, y, 0])
             if board_floor[x][y]:
                 answer.append([x, y, 1])
+
+    return answer
+
+#(solution 2) 구조물을 설치/삭제 시, 전체구조물이 성립가능한지 체크
+
+def is_possible(answer):
+    for ans in answer:
+        x, y, a = ans
+        if a == 1:  # 보
+            if [x, y - 1, 0] in answer or [x + 1, y - 1, 0] in answer or (
+                    [x - 1, y, 1] in answer and [x + 1, y, 1] in answer):
+                continue
+            else:
+                return False
+        else:  # 기둥
+            if y == 0 or [x, y, 1] in answer or [x - 1, y, 1] in answer or [x, y - 1, 0] in answer:
+                continue
+            else:
+                return False
+    return True
+
+
+def solution(n, build_frame):
+    answer = []
+    for command in build_frame:
+        x, y, a, b = command
+        if b == 1:  # 설치
+            answer.append([x, y, a]) #먼저 설치해주기
+            if not is_possible(answer): #전체 구조물 가능한지 체크
+                answer.remove([x, y, a]) #불가능하면 다시 원복
+        else:  # 삭제
+            if [x, y, a] in answer:
+                answer.remove([x, y, a]) #먼저 삭제해주기
+                if not is_possible(answer): #전체 구조물 가능한지 체크
+                    answer.append([x, y, a]) #불가능하면 다시 원복
+
+    answer.sort()
 
     return answer
